@@ -22,7 +22,7 @@ body{background:#0b0f19;color:#fff;font-family:'Inter',sans-serif;min-height:100
 .start-btn{width:100%;padding:1rem;font-size:1.1rem;font-family:'Outfit',sans-serif;font-weight:700;background:linear-gradient(135deg,#00f2fe,#4facfe);color:#0b0f19;border:none;border-radius:12px;cursor:pointer;transition:transform .2s,box-shadow .2s}
 .start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,242,254,.3)}
 #intro.hidden{display:none}
-#app{display:none;min-height:100vh;flex-direction:column}
+#app{display:none;height:100vh;flex-direction:column;overflow:hidden}
 #app.visible{display:flex}
 .top-bar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.06)}
 .top-bar h2{font-family:'Outfit',sans-serif;font-size:1.2rem;color:#00f2fe}
@@ -233,7 +233,7 @@ function drawChart(){
   cx.setTransform(dpr,0,0,dpr,0,0);
   cx.clearRect(0,0,w,h);
   if(events.length<2)return;
-  const pad={t:40,b:60,l:60,r:30};
+  const pad={t:40,b:80,l:60,r:30};
   const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
   const sorted=[...events].sort((a,b)=>a.year-b.year);
   const minY=sorted[0].year, maxY=sorted[sorted.length-1].year, span=maxY-minY||1;
@@ -261,13 +261,14 @@ function drawChart(){
   fg.addColorStop(0,'rgba(0,242,254,.08)');fg.addColorStop(1,'rgba(0,242,254,0)');
   cx.fillStyle=fg;cx.fill();
   // 点・ラベル
-  pts.forEach(p=>{
+  pts.forEach((p, i)=>{
     cx.beginPath();cx.arc(p.x,p.y,5,0,Math.PI*2);cx.fillStyle='#fff';cx.fill();
     cx.strokeStyle='#00f2fe';cx.lineWidth=2;cx.stroke();
     cx.fillStyle='rgba(255,255,255,.7)';cx.font='600 11px Outfit,sans-serif';cx.textAlign='center';
     cx.fillText(p.ev.label,p.x,p.ev.val>=50?p.y-16:p.y+22);
     cx.fillStyle='rgba(255,255,255,.3)';cx.font='10px Inter,sans-serif';
-    cx.fillText(p.ev.year+'年',p.x,h-pad.b+18);
+    const ny = (i % 2 === 0) ? h - pad.b + 18 : h - pad.b + 32;
+    cx.fillText(p.ev.year+'年',p.x,ny);
   });
   cx.fillStyle='rgba(255,255,255,.25)';cx.font='10px Outfit,sans-serif';cx.textAlign='right';
   cx.fillText('幸福度 高',pad.l-8,pad.t+8);cx.fillText('幸福度 低',pad.l-8,h-pad.b);
