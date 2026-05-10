@@ -11,8 +11,7 @@ body{background:#0b0f19;color:#fff;font-family:'Inter',sans-serif;min-height:100
 #intro{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;animation:fadeIn .8s}
 #intro h1{font-family:'Outfit',sans-serif;font-size:3.5rem;font-weight:700;background:linear-gradient(135deg,#00f2fe,#4facfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
 #intro p.sub{color:#94a3b8;font-size:1.1rem;margin-bottom:3rem}
-.privacy-note{font-size:.75rem;color:#64748b;margin-top:1.2rem;line-height:1.5;text-align:left;display:flex;gap:.4rem;align-items:flex-start}
-.privacy-note::before{content:'🔒';font-size:.85rem}
+.note-item{font-size:.75rem;color:#64748b;margin-top:1rem;line-height:1.5;text-align:left;display:flex;gap:.4rem;align-items:flex-start}
 .intro-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:3rem;width:90%;max-width:520px;backdrop-filter:blur(20px)}
 .intro-card label{display:block;font-size:.95rem;color:#94a3b8;margin-bottom:.75rem;text-align:left}
 .date-row{display:flex;gap:.75rem;margin-bottom:1.5rem}
@@ -90,7 +89,8 @@ canvas{width:100%;height:100%;display:block;border-radius:12px}
       <div class="field"><label>日</label><select id="b-day"></select></div>
     </div>
     <button class="start-btn" id="btn-start">チャートを作成する →</button>
-    <div class="privacy-note">サーバーへの通信など一切行いません。入力された内容はすべてお使いのブラウザ内にのみ保存され、外部に送信（漏洩）されることはありません。</div>
+    <div class="note-item"><span>🔒</span><span>サーバーへの通信など一切行いません。入力された内容はすべてお使いのブラウザ内にのみ保存され、外部に送信（漏洩）されることはありません。</span></div>
+    <div class="note-item" style="margin-top:0.4rem"><span>💡</span><span>他のパソコンなどで続きから作業したい場合は、データをJSONエクスポートし、そのファイルを移動先のパソコンで読み込んで（インポートして）ください。</span></div>
   </div>
 </div>
 <div id="app">
