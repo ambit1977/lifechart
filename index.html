@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Chart Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b0f19;color:#fff;font-family:'Inter',sans-serif;min-height:100vh}
+#intro{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;animation:fadeIn .8s}
+#intro h1{font-family:'Outfit',sans-serif;font-size:3.5rem;font-weight:700;background:linear-gradient(135deg,#00f2fe,#4facfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+#intro p.sub{color:#94a3b8;font-size:1.1rem;margin-bottom:3rem}
+.intro-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:3rem;width:90%;max-width:520px;backdrop-filter:blur(20px)}
+.intro-card label{display:block;font-size:.95rem;color:#94a3b8;margin-bottom:.75rem;text-align:left}
+.date-row{display:flex;gap:.75rem;margin-bottom:1.5rem}
+.date-row .field{flex:1;display:flex;flex-direction:column;gap:.4rem}
+.date-row .field label{font-size:.8rem;margin-bottom:0}
+.date-row input,.date-row select{width:100%;padding:.8rem;font-size:1.2rem;font-family:'Outfit',sans-serif;font-weight:700;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;text-align:center;outline:none;transition:border-color .2s}
+.date-row input:focus,.date-row select:focus{border-color:#00f2fe;box-shadow:0 0 15px rgba(0,242,254,.15)}
+.date-row select option{background:#1a1d2e;color:#fff}
+.start-btn{width:100%;padding:1rem;font-size:1.1rem;font-family:'Outfit',sans-serif;font-weight:700;background:linear-gradient(135deg,#00f2fe,#4facfe);color:#0b0f19;border:none;border-radius:12px;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,242,254,.3)}
+#intro.hidden{display:none}
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.visible{display:flex}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.top-bar h2{font-family:'Outfit',sans-serif;font-size:1.2rem;color:#00f2fe}
+.top-bar .actions{display:flex;gap:.5rem}
+.top-bar button{padding:.4rem .8rem;font-size:.8rem;font-family:'Outfit',sans-serif;font-weight:600;border-radius:6px;cursor:pointer;transition:all .2s}
+.btn-s{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.1)}
+.btn-s:hover{background:rgba(255,255,255,.1)}
+.btn-p{background:linear-gradient(135deg,#00f2fe,#4facfe);color:#0b0f19;border:none}
+.btn-p:hover{box-shadow:0 4px 15px rgba(0,242,254,.3)}
+.main-content{display:flex;flex:1;overflow:hidden}
+.event-panel{width:400px;min-width:400px;border-right:1px solid rgba(255,255,255,.06);overflow-y:auto;padding:1rem}
+.event-panel h3{font-family:'Outfit',sans-serif;font-size:.95rem;color:#94a3b8;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+.add-btn{background:rgba(0,242,254,.1);color:#00f2fe;border:1px solid rgba(0,242,254,.2);padding:.25rem .6rem;border-radius:6px;font-size:.75rem;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;transition:all .2s}
+.add-btn:hover{background:rgba(0,242,254,.2)}
+.ev{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:.75rem;margin-bottom:.5rem;transition:border-color .2s}
+.ev:hover{border-color:rgba(255,255,255,.12)}
+.ev-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}
+.ev-yr{width:65px;background:rgba(0,242,254,.08);border:1px solid rgba(0,242,254,.15);border-radius:5px;color:#00f2fe;font-family:'Outfit',sans-serif;font-weight:700;font-size:.8rem;padding:.2rem .3rem;text-align:center;outline:none}
+.ev-yr:focus{border-color:#00f2fe}
+.ev-nm{flex:1;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.1);color:#fff;font-size:.85rem;padding:.2rem 0;outline:none;font-family:'Inter',sans-serif}
+.ev-nm:focus{border-bottom-color:#00f2fe}
+.ev-del{background:none;border:none;color:#ef4444;cursor:pointer;font-size:.9rem;padding:.1rem .3rem;opacity:.3;transition:opacity .2s}
+.ev-del:hover{opacity:1}
+.ev-memo{width:100%;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:5px;color:#94a3b8;font-size:.75rem;padding:.3rem .5rem;outline:none;font-family:'Inter',sans-serif;margin-top:.4rem;resize:none;height:28px}
+.ev-memo::placeholder{color:rgba(255,255,255,.15)}
+.ev-memo:focus{border-color:rgba(0,242,254,.3);color:#fff}
+.tooltip{position:absolute;background:rgba(15,23,42,.95);border:1px solid rgba(0,242,254,.3);border-radius:8px;padding:.5rem .75rem;pointer-events:none;z-index:10;max-width:250px;opacity:0;transition:opacity .15s}
+.tooltip .tt-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:.85rem;color:#00f2fe;margin-bottom:.2rem}
+.tooltip .tt-year{font-size:.75rem;color:#94a3b8}
+.tooltip .tt-memo{font-size:.8rem;color:#fff;margin-top:.3rem;line-height:1.4}
+.sl-row{display:flex;align-items:center;gap:.5rem}
+.sl-row span{font-size:.7rem;color:#94a3b8}
+input[type=range]{flex:1;-webkit-appearance:none;height:5px;background:linear-gradient(90deg,#ef4444,#eab308,#22c55e);border-radius:3px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:#fff;border-radius:50%;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.sl-v{font-family:'Outfit',sans-serif;font-weight:700;font-size:.8rem;min-width:24px;text-align:center}
+.chart-panel{flex:1;display:flex;flex-direction:column;padding:1rem}
+.chart-panel h3{font-family:'Outfit',sans-serif;font-size:.9rem;color:#94a3b8;margin-bottom:.75rem}
+.chart-wrapper{flex:1;position:relative;background:rgba(0,0,0,.2);border-radius:12px;overflow:visible;min-height:400px}
+canvas{width:100%;height:100%;display:block;border-radius:12px}
+.bottom-bar{display:flex;justify-content:flex-end;padding:.5rem 1rem;gap:.5rem}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#1a1d2e;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1.5rem;width:90%;max-width:380px}
+.modal h3{font-family:'Outfit',sans-serif;margin-bottom:1rem;font-size:1rem}
+.fg{margin-bottom:.75rem}
+.fg label{display:block;font-size:.8rem;color:#94a3b8;margin-bottom:.3rem}
+.fg input{width:100%;padding:.5rem .7rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;font-size:.85rem;outline:none;font-family:'Inter',sans-serif}
+.fg input:focus{border-color:#00f2fe}
+.ma{display:flex;gap:.5rem;margin-top:1rem}
+.ma button{flex:1;padding:.5rem;border-radius:6px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;font-size:.85rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="intro">
+  <h1>Life Chart Builder</h1>
+  <p class="sub">あなたの人生曲線を美しく描く</p>
+  <div class="intro-card">
+    <label>生年月日を教えてください</label>
+    <div class="date-row">
+      <div class="field"><label>年（西暦）</label><input type="number" id="b-year" placeholder="1990" min="1920" max="2020" autofocus></div>
+      <div class="field"><label>月</label><select id="b-month"></select></div>
+      <div class="field"><label>日</label><select id="b-day"></select></div>
+    </div>
+    <button class="start-btn" id="btn-start">チャートを作成する →</button>
+  </div>
+</div>
+<div id="app">
+  <div class="top-bar">
+    <h2 id="chart-title">Life Chart</h2>
+    <div class="actions">
+      <button class="btn-s" id="btn-import" title="JSONファイルからインポート">📂 インポート</button>
+      <button class="btn-s" id="btn-export-json" title="JSON形式でエクスポート">💾 JSON</button>
+      <button class="btn-s" id="btn-export-csv" title="CSV形式でエクスポート">📊 CSV</button>
+      <button class="btn-s" id="btn-reset">🔄 リセット</button>
+      <button class="btn-p" id="btn-export">📥 画像保存</button>
+    </div>
+  </div>
+  <input type="file" id="file-import" accept=".json" style="display:none">
+  <div class="main-content">
+    <div class="event-panel">
+      <h3><span>ライフイベント</span><button class="add-btn" id="btn-add">＋ 追加</button></h3>
+      <div id="ev-list"></div>
+    </div>
+    <div class="chart-panel">
+      <h3>幸福度チャート（スライダーでリアルタイム反映）</h3>
+      <div class="chart-wrapper"><canvas id="cv"></canvas><div class="tooltip" id="tooltip"><div class="tt-name"></div><div class="tt-year"></div><div class="tt-memo"></div></div></div>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3>イベントを追加</h3>
+    <div class="fg"><label>年（西暦）</label><input type="number" id="m-yr" placeholder="2010"></div>
+    <div class="fg"><label>イベント名</label><input type="text" id="m-tt" placeholder="例: 転職、結婚"></div>
+    <div class="fg"><label>メモ（任意）</label><input type="text" id="m-memo" placeholder="例: 思い切って踏み出した"></div>
+    <div class="fg"><label>幸福度（0〜100）</label><input type="number" id="m-vl" value="50" min="0" max="100"></div>
+    <div class="ma">
+      <button class="btn-s" id="m-cancel">キャンセル</button>
+      <button class="btn-p" id="m-ok">追加</button>
+    </div>
+  </div>
+</div>
+<script>
+// 月・日セレクト初期化
+const bMonth = document.getElementById('b-month');
+const bDay = document.getElementById('b-day');
+for(let m=1;m<=12;m++){const o=document.createElement('option');o.value=m;o.textContent=m+'月';bMonth.appendChild(o);}
+for(let d=1;d<=31;d++){const o=document.createElement('option');o.value=d;o.textContent=d+'日';bDay.appendChild(o);}
+
+const NOW = new Date().getFullYear();
+let birthYear, birthMonth, birthDay, events=[];
+const cv = document.getElementById('cv');
+const cx = cv.getContext('2d');
+const evList = document.getElementById('ev-list');
+const modalBg = document.getElementById('modal-bg');
+
+// 日本の学年計算: 4/2〜翌4/1生まれが同学年
+function schoolEntryYear(by, bm, bd) {
+  // 4月2日以降生まれ → 翌年度入学、4月1日以前生まれ → 当年度入学
+  if (bm < 4 || (bm === 4 && bd <= 1)) return by + 6;
+  return by + 7;
+}
+
+document.getElementById('btn-start').addEventListener('click', startApp);
+
+function startApp() {
+  const y=parseInt(document.getElementById('b-year').value);
+  const m=parseInt(bMonth.value);
+  const d=parseInt(bDay.value);
+  if(!y||y<1920||y>2020){document.getElementById('b-year').style.borderColor='#ef4444';return;}
+  birthYear=y; birthMonth=m; birthDay=d;
+  const ey = schoolEntryYear(y, m, d); // 小学校入学年度
+  document.getElementById('chart-title').textContent=`${y}年${m}月${d}日生まれのライフチャート`;
+
+  // サンプルイベント（リアルな幸福度付き）
+  const stages = [
+    [y, '誕生', '新しい命の始まり', 80],
+    [ey, '小学校入学', '期待と不安の新生活', 75],
+    [ey+3, '小学校中学年', '友達と遊ぶ毎日が楽しかった', 85],
+    [ey+6, '中学校入学', '環境の変化に戸惑い', 60],
+    [ey+8, '中学3年', '受験勉強に追われた日々', 45],
+    [ey+9, '高校入学', '新しい出会いと青春', 70],
+    [ey+11, '高校3年', '進路や受験のプレッシャー', 40],
+    [ey+12, '大学/専門学校', '自由な時間と新しい学び', 75],
+    [ey+14, '就活', '将来への不安と焦り', 35],
+    [ey+16, '社会人', '新生活のスタート', 60],
+    [ey+19, '仕事3年目', '少しずつ自信がついてきた', 55],
+  ];
+  events=[];
+  stages.forEach(([yr,label,memo,val])=>{if(yr<=NOW)events.push({year:yr,label,memo,val});});
+  if(events.length&&events[events.length-1].year<NOW)events.push({year:NOW,label:'現在',memo:'',val:50});
+  
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  renderEvents(); drawChart();
+}
+
+function renderEvents(){
+  events.sort((a,b)=>a.year-b.year);
+  evList.innerHTML='';
+  events.forEach((ev,i)=>{
+    const d=document.createElement('div');d.className='ev';
+    d.innerHTML=`<div class="ev-top">
+      <input class="ev-yr" type="number" value="${ev.year}" data-i="${i}" min="1920" max="${NOW}">
+      <input class="ev-nm" type="text" value="${ev.label}" data-i="${i}" placeholder="イベント名">
+      <button class="ev-del" data-i="${i}">✕</button>
+    </div>
+    <div class="sl-row">
+      <span>😢</span>
+      <input type="range" min="0" max="100" value="${ev.val}" data-i="${i}">
+      <span>😊</span>
+      <span class="sl-v" id="sv${i}">${ev.val}</span>
+    </div>
+    <textarea class="ev-memo" data-i="${i}" placeholder="メモ（任意）">${ev.memo||''}</textarea>`;
+    evList.appendChild(d);
+  });
+  // スライダー
+  evList.querySelectorAll('input[type=range]').forEach(s=>{
+    s.addEventListener('input',e=>{const i=+e.target.dataset.i;events[i].val=+e.target.value;document.getElementById('sv'+i).textContent=e.target.value;drawChart();});
+  });
+  // 名前変更
+  evList.querySelectorAll('.ev-nm').forEach(n=>{
+    n.addEventListener('input',e=>{events[+e.target.dataset.i].label=e.target.value;drawChart();});
+  });
+  // メモ変更
+  evList.querySelectorAll('.ev-memo').forEach(n=>{
+    n.addEventListener('input',e=>{events[+e.target.dataset.i].memo=e.target.value;});
+  });
+  // 年変更
+  evList.querySelectorAll('.ev-yr').forEach(y=>{
+    y.addEventListener('change',e=>{
+      const i=+e.target.dataset.i;
+      const v=+e.target.value;
+      if(v>=1920&&v<=NOW){events[i].year=v;renderEvents();drawChart();}
+    });
+  });
+  // 削除
+  evList.querySelectorAll('.ev-del').forEach(b=>{
+    b.addEventListener('click',()=>{events.splice(+b.dataset.i,1);renderEvents();drawChart();});
+  });
+}
+
+function drawChart(){
+  const w=cv.parentElement.clientWidth, h=cv.parentElement.clientHeight;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  cx.clearRect(0,0,w,h);
+  if(events.length<2)return;
+  const pad={t:40,b:60,l:60,r:30};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const sorted=[...events].sort((a,b)=>a.year-b.year);
+  const minY=sorted[0].year, maxY=sorted[sorted.length-1].year, span=maxY-minY||1;
+  const xF=yr=>pad.l+((yr-minY)/span)*cw;
+  const yF=v=>pad.t+ch-(v/100)*ch;
+  // グリッド
+  cx.strokeStyle='rgba(255,255,255,.04)';cx.lineWidth=1;
+  for(let v=0;v<=100;v+=25){cx.beginPath();cx.moveTo(pad.l,yF(v));cx.lineTo(w-pad.r,yF(v));cx.stroke();}
+  cx.strokeStyle='rgba(255,255,255,.1)';cx.setLineDash([4,4]);
+  cx.beginPath();cx.moveTo(pad.l,yF(50));cx.lineTo(w-pad.r,yF(50));cx.stroke();cx.setLineDash([]);
+  // 座標
+  const pts=sorted.map(ev=>({x:xF(ev.year),y:yF(ev.val),ev}));
+  // 曲線
+  cx.beginPath();cx.moveTo(pts[0].x,pts[0].y);
+  for(let i=0;i<pts.length-1;i++){
+    const cpx=(pts[i].x+pts[i+1].x)/2;
+    cx.bezierCurveTo(cpx,pts[i].y,cpx,pts[i+1].y,pts[i+1].x,pts[i+1].y);
+  }
+  const gr=cx.createLinearGradient(pad.l,0,w-pad.r,0);
+  gr.addColorStop(0,'#00f2fe');gr.addColorStop(1,'#4facfe');
+  cx.strokeStyle=gr;cx.lineWidth=3.5;cx.shadowColor='rgba(0,242,254,.4)';cx.shadowBlur=12;cx.stroke();cx.shadowBlur=0;
+  // 塗り
+  cx.lineTo(pts[pts.length-1].x,h-pad.b);cx.lineTo(pts[0].x,h-pad.b);cx.closePath();
+  const fg=cx.createLinearGradient(0,pad.t,0,h-pad.b);
+  fg.addColorStop(0,'rgba(0,242,254,.08)');fg.addColorStop(1,'rgba(0,242,254,0)');
+  cx.fillStyle=fg;cx.fill();
+  // 点・ラベル
+  pts.forEach(p=>{
+    cx.beginPath();cx.arc(p.x,p.y,5,0,Math.PI*2);cx.fillStyle='#fff';cx.fill();
+    cx.strokeStyle='#00f2fe';cx.lineWidth=2;cx.stroke();
+    cx.fillStyle='rgba(255,255,255,.7)';cx.font='600 11px Outfit,sans-serif';cx.textAlign='center';
+    cx.fillText(p.ev.label,p.x,p.ev.val>=50?p.y-16:p.y+22);
+    cx.fillStyle='rgba(255,255,255,.3)';cx.font='10px Inter,sans-serif';
+    cx.fillText(p.ev.year+'年',p.x,h-pad.b+18);
+  });
+  cx.fillStyle='rgba(255,255,255,.25)';cx.font='10px Outfit,sans-serif';cx.textAlign='right';
+  cx.fillText('幸福度 高',pad.l-8,pad.t+8);cx.fillText('幸福度 低',pad.l-8,h-pad.b);
+  // 点の座標を保存（ツールチップ用）
+  window._chartPts = pts;
+}
+
+// ツールチップ
+const tooltip = document.getElementById('tooltip');
+const chartWrapper = document.querySelector('.chart-wrapper');
+
+cv.addEventListener('mousemove', e => {
+  if (!window._chartPts) return;
+  const rect = cv.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const scaleX = cv.width / (window.devicePixelRatio || 1) / rect.width;
+  const scaleY = cv.height / (window.devicePixelRatio || 1) / rect.height;
+  const cx2 = mx * scaleX;
+  const cy2 = my * scaleY;
+
+  let found = null;
+  for (const p of window._chartPts) {
+    if (Math.abs(p.x - cx2) < 15 && Math.abs(p.y - cy2) < 15) { found = p; break; }
+  }
+  if (found && found.ev.memo) {
+    tooltip.querySelector('.tt-name').textContent = found.ev.label;
+    tooltip.querySelector('.tt-year').textContent = found.ev.year + '年（幸福度: ' + found.ev.val + '）';
+    tooltip.querySelector('.tt-memo').textContent = found.ev.memo;
+    tooltip.style.left = (mx + 15) + 'px';
+    tooltip.style.top = (my - 10) + 'px';
+    tooltip.style.opacity = '1';
+  } else {
+    tooltip.style.opacity = '0';
+  }
+});
+cv.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+
+window.addEventListener('resize',drawChart);
+
+// 追加モーダル
+document.getElementById('btn-add').addEventListener('click',()=>{
+  document.getElementById('m-yr').value='';document.getElementById('m-tt').value='';document.getElementById('m-memo').value='';document.getElementById('m-vl').value='50';
+  modalBg.classList.add('open');
+});
+document.getElementById('m-cancel').addEventListener('click',()=>modalBg.classList.remove('open'));
+modalBg.addEventListener('click',e=>{if(e.target===modalBg)modalBg.classList.remove('open');});
+document.getElementById('m-ok').addEventListener('click',()=>{
+  const yr=+document.getElementById('m-yr').value,tt=document.getElementById('m-tt').value.trim(),memo=document.getElementById('m-memo').value.trim(),vl=+document.getElementById('m-vl').value;
+  if(!yr||yr<birthYear||yr>NOW){alert(birthYear+'年〜'+NOW+'年の間で入力してください');return;}
+  if(!tt){alert('イベント名を入力してください');return;}
+  events.push({year:yr,label:tt,memo:memo,val:Math.max(0,Math.min(100,vl||50))});
+  modalBg.classList.remove('open');renderEvents();drawChart();saveToStorage();
+});
+
+// ===== 保存機能 (localStorage) =====
+function saveToStorage() {
+  const data = { birthYear, birthMonth, birthDay, events };
+  localStorage.setItem('lifechart_data', JSON.stringify(data));
+}
+function loadFromStorage() {
+  const raw = localStorage.getItem('lifechart_data');
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    birthYear = data.birthYear; birthMonth = data.birthMonth; birthDay = data.birthDay;
+    events = data.events || [];
+    document.getElementById('chart-title').textContent = `${birthYear}年${birthMonth}月${birthDay}日生まれのライフチャート`;
+    document.getElementById('intro').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    renderEvents(); drawChart();
+    return true;
+  } catch(e) { return false; }
+}
+// 変更時に自動保存をフック
+const origRender = renderEvents;
+renderEvents = function() { origRender(); saveToStorage(); };
+
+// ===== エクスポート (JSON) =====
+document.getElementById('btn-export-json').addEventListener('click', () => {
+  const data = JSON.stringify({ birthYear, birthMonth, birthDay, events }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a'); a.download = `life-chart-${birthYear}.json`;
+  a.href = URL.createObjectURL(blob); a.click(); URL.revokeObjectURL(a.href);
+});
+
+// ===== エクスポート (CSV) =====
+document.getElementById('btn-export-csv').addEventListener('click', () => {
+  const bom = '\uFEFF'; // Excel用BOM
+  let csv = bom + '年,イベント名,メモ,幸福度\n';
+  [...events].sort((a,b) => a.year - b.year).forEach(ev => {
+    const esc = s => '"' + (s||'').replace(/"/g, '""') + '"';
+    csv += `${ev.year},${esc(ev.label)},${esc(ev.memo)},${ev.val}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.download = `life-chart-${birthYear}.csv`;
+  a.href = URL.createObjectURL(blob); a.click(); URL.revokeObjectURL(a.href);
+});
+
+// ===== インポート (JSON) =====
+const fileInput = document.getElementById('file-import');
+document.getElementById('btn-import').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.birthYear || !data.events) { alert('無効なファイル形式です'); return; }
+      birthYear = data.birthYear; birthMonth = data.birthMonth || 1; birthDay = data.birthDay || 1;
+      events = data.events;
+      document.getElementById('chart-title').textContent = `${birthYear}年${birthMonth}月${birthDay}日生まれのライフチャート`;
+      document.getElementById('intro').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
+      renderEvents(); drawChart();
+    } catch(err) { alert('ファイルの読み込みに失敗しました: ' + err.message); }
+  };
+  reader.readAsText(file); fileInput.value = '';
+});
+
+// リセット
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  if(!confirm('リセットして最初からやり直しますか？'))return;
+  events=[]; localStorage.removeItem('lifechart_data');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('intro').classList.remove('hidden');
+});
+// 画像エクスポート
+document.getElementById('btn-export').addEventListener('click',()=>{
+  const a=document.createElement('a');a.download='life-chart-'+birthYear+'.png';a.href=cv.toDataURL('image/png');a.click();
+});
+
+// ===== 起動時にlocalStorageから復元 =====
+loadFromStorage();
+</script>
+</body>
+</html>
