@@ -242,54 +242,67 @@ function renderEvents(){
   });
 }
 
-function drawChart(){
-  const w=cv.parentElement.clientWidth, h=cv.parentElement.clientHeight;
-  const dpr=window.devicePixelRatio||1;
-  cv.width=w*dpr;cv.height=h*dpr;
-  cx.setTransform(dpr,0,0,dpr,0,0);
-  cx.clearRect(0,0,w,h);
-  if(events.length<2)return;
-  const pad={t:40,b:80,l:60,r:30};
-  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
-  const sorted=[...events].sort((a,b)=>a.year-b.year);
-  const minY=sorted[0].year, maxY=sorted[sorted.length-1].year, span=maxY-minY||1;
-  const xF=yr=>pad.l+((yr-minY)/span)*cw;
-  const yF=v=>pad.t+ch-(v/100)*ch;
+function renderChartToCanvas(targetCanvas, w, h, dpr = 1) {
+  const tcx = targetCanvas.getContext('2d');
+  targetCanvas.width = w * dpr; targetCanvas.height = h * dpr;
+  tcx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  
+  // 背景色（Canvas自体に背景を塗る）
+  tcx.fillStyle = '#0b0f19';
+  tcx.fillRect(0, 0, w, h);
+  
+  if (events.length < 2) return [];
+  const pad = { t: 40, b: 100, l: 60, r: 30 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+  const sorted = [...events].sort((a, b) => a.year - b.year);
+  const minY = sorted[0].year, maxY = sorted[sorted.length - 1].year, span = maxY - minY || 1;
+  const xF = yr => pad.l + ((yr - minY) / span) * cw;
+  const yF = v => pad.t + ch - (v / 100) * ch;
   // グリッド
-  cx.strokeStyle='rgba(255,255,255,.04)';cx.lineWidth=1;
-  for(let v=0;v<=100;v+=25){cx.beginPath();cx.moveTo(pad.l,yF(v));cx.lineTo(w-pad.r,yF(v));cx.stroke();}
-  cx.strokeStyle='rgba(255,255,255,.1)';cx.setLineDash([4,4]);
-  cx.beginPath();cx.moveTo(pad.l,yF(50));cx.lineTo(w-pad.r,yF(50));cx.stroke();cx.setLineDash([]);
+  tcx.strokeStyle = 'rgba(255,255,255,.04)'; tcx.lineWidth = 1;
+  for (let v = 0; v <= 100; v += 25) { tcx.beginPath(); tcx.moveTo(pad.l, yF(v)); tcx.lineTo(w - pad.r, yF(v)); tcx.stroke(); }
+  tcx.strokeStyle = 'rgba(255,255,255,.1)'; tcx.setLineDash([4, 4]);
+  tcx.beginPath(); tcx.moveTo(pad.l, yF(50)); tcx.lineTo(w - pad.r, yF(50)); tcx.stroke(); tcx.setLineDash([]);
   // 座標
-  const pts=sorted.map(ev=>({x:xF(ev.year),y:yF(ev.val),ev}));
+  const pts = sorted.map(ev => ({ x: xF(ev.year), y: yF(ev.val), ev }));
   // 曲線
-  cx.beginPath();cx.moveTo(pts[0].x,pts[0].y);
-  for(let i=0;i<pts.length-1;i++){
-    const cpx=(pts[i].x+pts[i+1].x)/2;
-    cx.bezierCurveTo(cpx,pts[i].y,cpx,pts[i+1].y,pts[i+1].x,pts[i+1].y);
+  tcx.beginPath(); tcx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const cpx = (pts[i].x + pts[i + 1].x) / 2;
+    tcx.bezierCurveTo(cpx, pts[i].y, cpx, pts[i + 1].y, pts[i + 1].x, pts[i + 1].y);
   }
-  const gr=cx.createLinearGradient(pad.l,0,w-pad.r,0);
-  gr.addColorStop(0,'#00f2fe');gr.addColorStop(1,'#4facfe');
-  cx.strokeStyle=gr;cx.lineWidth=3.5;cx.shadowColor='rgba(0,242,254,.4)';cx.shadowBlur=12;cx.stroke();cx.shadowBlur=0;
+  const gr = tcx.createLinearGradient(pad.l, 0, w - pad.r, 0);
+  gr.addColorStop(0, '#00f2fe'); gr.addColorStop(1, '#4facfe');
+  tcx.strokeStyle = gr; tcx.lineWidth = 3.5; tcx.shadowColor = 'rgba(0,242,254,.4)'; tcx.shadowBlur = 12; tcx.stroke(); tcx.shadowBlur = 0;
+  
   // 塗り
-  cx.lineTo(pts[pts.length-1].x,h-pad.b);cx.lineTo(pts[0].x,h-pad.b);cx.closePath();
-  const fg=cx.createLinearGradient(0,pad.t,0,h-pad.b);
-  fg.addColorStop(0,'rgba(0,242,254,.08)');fg.addColorStop(1,'rgba(0,242,254,0)');
-  cx.fillStyle=fg;cx.fill();
+  tcx.lineTo(pts[pts.length - 1].x, h - pad.b); tcx.lineTo(pts[0].x, h - pad.b); tcx.closePath();
+  const fg = tcx.createLinearGradient(0, pad.t, 0, h - pad.b);
+  fg.addColorStop(0, 'rgba(0,242,254,.08)'); fg.addColorStop(1, 'rgba(0,242,254,0)');
+  tcx.fillStyle = fg; tcx.fill();
+  
   // 点・ラベル
-  pts.forEach((p, i)=>{
-    cx.beginPath();cx.arc(p.x,p.y,5,0,Math.PI*2);cx.fillStyle='#fff';cx.fill();
-    cx.strokeStyle='#00f2fe';cx.lineWidth=2;cx.stroke();
-    cx.fillStyle='rgba(255,255,255,.7)';cx.font='600 11px Outfit,sans-serif';cx.textAlign='center';
-    cx.fillText(p.ev.label,p.x,p.ev.val>=50?p.y-16:p.y+22);
-    cx.fillStyle='rgba(255,255,255,.3)';cx.font='10px Inter,sans-serif';
+  pts.forEach((p, i) => {
+    tcx.beginPath(); tcx.arc(p.x, p.y, 5, 0, Math.PI * 2); tcx.fillStyle = '#fff'; tcx.fill();
+    tcx.strokeStyle = '#00f2fe'; tcx.lineWidth = 2; tcx.stroke();
+    tcx.fillStyle = 'rgba(255,255,255,.7)'; tcx.font = '600 11px Outfit,sans-serif'; tcx.textAlign = 'center';
+    tcx.fillText(p.ev.label, p.x, p.ev.val >= 50 ? p.y - 16 : p.y + 22);
+    tcx.fillStyle = 'rgba(255,255,255,.3)'; tcx.font = '10px Inter,sans-serif';
     const ny = (i % 3 === 0) ? h - pad.b + 18 : (i % 3 === 1) ? h - pad.b + 32 : h - pad.b + 46;
-    cx.fillText(p.ev.year+'年',p.x,ny);
+    tcx.fillText(p.ev.year + '年', p.x, ny);
   });
-  cx.fillStyle='rgba(255,255,255,.25)';cx.font='10px Outfit,sans-serif';cx.textAlign='right';
-  cx.fillText('幸福度 高',pad.l-8,pad.t+8);cx.fillText('幸福度 低',pad.l-8,h-pad.b);
-  // 点の座標を保存（ツールチップ用）
-  window._chartPts = pts;
+  tcx.fillStyle = 'rgba(255,255,255,.25)'; tcx.font = '10px Outfit,sans-serif'; tcx.textAlign = 'right';
+  tcx.fillText('幸福度 高', pad.l - 8, pad.t + 8); tcx.fillText('幸福度 低', pad.l - 8, h - pad.b);
+  return pts;
+}
+
+function drawChart() {
+  const wrapper = cv.parentElement;
+  const w = Math.max(wrapper.clientWidth, events.length * 70);
+  const h = wrapper.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  window._chartPts = renderChartToCanvas(cv, w, h, dpr);
 }
 
 // ツールチップ
@@ -414,7 +427,17 @@ document.getElementById('btn-reset').addEventListener('click',()=>{
 });
 // 画像エクスポート
 document.getElementById('btn-export').addEventListener('click',()=>{
-  const a=document.createElement('a');a.download='life-chart-'+birthYear+'.png';a.href=cv.toDataURL('image/png');a.click();
+  const offscreenCv = document.createElement('canvas');
+  const a4W = 1414; // A4横の比率 (1.414:1)
+  const a4H = 1000;
+  
+  // A4サイズ、DPR=2の高解像度で描画
+  renderChartToCanvas(offscreenCv, a4W, a4H, 2);
+  
+  const a = document.createElement('a');
+  a.download = `life-chart-${birthYear}.png`;
+  a.href = offscreenCv.toDataURL('image/png');
+  a.click();
 });
 
 // ===== 起動時にlocalStorageから復元 =====
