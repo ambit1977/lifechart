@@ -97,13 +97,13 @@ function renderEvents(){
   });
 }
 
-function renderChartToCanvas(targetCanvas, w, h, dpr = 1) {
+function renderChartToCanvas(targetCanvas, w, h, dpr = 1, isPrint = false) {
   const tcx = targetCanvas.getContext('2d');
   targetCanvas.width = w * dpr; targetCanvas.height = h * dpr;
   tcx.setTransform(dpr, 0, 0, dpr, 0, 0);
   
   // 背景色（Canvas自体に背景を塗る）
-  tcx.fillStyle = '#0b0f19';
+  tcx.fillStyle = isPrint ? '#ffffff' : '#0b0f19';
   tcx.fillRect(0, 0, w, h);
   
   if (events.length < 2) return [];
@@ -114,40 +114,54 @@ function renderChartToCanvas(targetCanvas, w, h, dpr = 1) {
   const minY = sorted[0].year, maxY = sorted[sorted.length - 1].year, span = maxY - minY || 1;
   const xF = yr => pad.l + ((yr - minY) / span) * cw;
   const yF = v => pad.t + ch - (v / 100) * ch;
+  
   // グリッド
-  tcx.strokeStyle = 'rgba(255,255,255,.04)'; tcx.lineWidth = 1;
+  tcx.strokeStyle = isPrint ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.04)'; tcx.lineWidth = 1;
   for (let v = 0; v <= 100; v += 25) { tcx.beginPath(); tcx.moveTo(pad.l, yF(v)); tcx.lineTo(w - pad.r, yF(v)); tcx.stroke(); }
-  tcx.strokeStyle = 'rgba(255,255,255,.1)'; tcx.setLineDash([4, 4]);
+  tcx.strokeStyle = isPrint ? 'rgba(0,0,0,.15)' : 'rgba(255,255,255,.1)'; tcx.setLineDash([4, 4]);
   tcx.beginPath(); tcx.moveTo(pad.l, yF(50)); tcx.lineTo(w - pad.r, yF(50)); tcx.stroke(); tcx.setLineDash([]);
+  
   // 座標
   const pts = sorted.map(ev => ({ x: xF(ev.year), y: yF(ev.val), ev }));
+  
   // 曲線
   tcx.beginPath(); tcx.moveTo(pts[0].x, pts[0].y);
   for (let i = 0; i < pts.length - 1; i++) {
     const cpx = (pts[i].x + pts[i + 1].x) / 2;
     tcx.bezierCurveTo(cpx, pts[i].y, cpx, pts[i + 1].y, pts[i + 1].x, pts[i + 1].y);
   }
-  const gr = tcx.createLinearGradient(pad.l, 0, w - pad.r, 0);
-  gr.addColorStop(0, '#00f2fe'); gr.addColorStop(1, '#4facfe');
-  tcx.strokeStyle = gr; tcx.lineWidth = 3.5; tcx.shadowColor = 'rgba(0,242,254,.4)'; tcx.shadowBlur = 12; tcx.stroke(); tcx.shadowBlur = 0;
+  
+  if (isPrint) {
+    tcx.strokeStyle = '#0284c7'; // 印刷用には少し濃いめの青
+    tcx.lineWidth = 3.5;
+    tcx.stroke();
+  } else {
+    const gr = tcx.createLinearGradient(pad.l, 0, w - pad.r, 0);
+    gr.addColorStop(0, '#00f2fe'); gr.addColorStop(1, '#4facfe');
+    tcx.strokeStyle = gr; tcx.lineWidth = 3.5; tcx.shadowColor = 'rgba(0,242,254,.4)'; tcx.shadowBlur = 12; tcx.stroke(); tcx.shadowBlur = 0;
+  }
   
   // 塗り
   tcx.lineTo(pts[pts.length - 1].x, h - pad.b); tcx.lineTo(pts[0].x, h - pad.b); tcx.closePath();
   const fg = tcx.createLinearGradient(0, pad.t, 0, h - pad.b);
-  fg.addColorStop(0, 'rgba(0,242,254,.08)'); fg.addColorStop(1, 'rgba(0,242,254,0)');
+  fg.addColorStop(0, isPrint ? 'rgba(2,132,199,.1)' : 'rgba(0,242,254,.08)');
+  fg.addColorStop(1, isPrint ? 'rgba(2,132,199,0)' : 'rgba(0,242,254,0)');
   tcx.fillStyle = fg; tcx.fill();
   
   // 点・ラベル
   pts.forEach((p, i) => {
     tcx.beginPath(); tcx.arc(p.x, p.y, 5, 0, Math.PI * 2); tcx.fillStyle = '#fff'; tcx.fill();
-    tcx.strokeStyle = '#00f2fe'; tcx.lineWidth = 2; tcx.stroke();
-    tcx.fillStyle = 'rgba(255,255,255,.7)'; tcx.font = '600 11px Outfit,sans-serif'; tcx.textAlign = 'center';
+    tcx.strokeStyle = isPrint ? '#0284c7' : '#00f2fe'; tcx.lineWidth = 2; tcx.stroke();
+    
+    tcx.fillStyle = isPrint ? '#1e293b' : 'rgba(255,255,255,.7)'; tcx.font = '600 11px Outfit,sans-serif'; tcx.textAlign = 'center';
     tcx.fillText(p.ev.label, p.x, p.ev.val >= 50 ? p.y - 16 : p.y + 22);
-    tcx.fillStyle = 'rgba(255,255,255,.3)'; tcx.font = '10px Inter,sans-serif';
+    
+    tcx.fillStyle = isPrint ? '#64748b' : 'rgba(255,255,255,.3)'; tcx.font = '10px Inter,sans-serif';
     const ny = (i % 3 === 0) ? h - pad.b + 18 : (i % 3 === 1) ? h - pad.b + 32 : h - pad.b + 46;
     tcx.fillText(p.ev.year + '年', p.x, ny);
   });
-  tcx.fillStyle = 'rgba(255,255,255,.25)'; tcx.font = '10px Outfit,sans-serif'; tcx.textAlign = 'right';
+  
+  tcx.fillStyle = isPrint ? '#94a3b8' : 'rgba(255,255,255,.25)'; tcx.font = '10px Outfit,sans-serif'; tcx.textAlign = 'right';
   tcx.fillText('幸福度 高', pad.l - 8, pad.t + 8); tcx.fillText('幸福度 低', pad.l - 8, h - pad.b);
   return pts;
 }
@@ -286,8 +300,8 @@ document.getElementById('btn-export').addEventListener('click',()=>{
   const a4W = 1414; // A4横の比率 (1.414:1)
   const a4H = 1000;
   
-  // A4サイズ、DPR=2の高解像度で描画
-  renderChartToCanvas(offscreenCv, a4W, a4H, 2);
+  // A4サイズ、DPR=2の高解像度で描画（第5引数にtrueを渡して印刷用デザインに）
+  renderChartToCanvas(offscreenCv, a4W, a4H, 2, true);
   
   const a = document.createElement('a');
   a.download = `life-chart-${birthYear}.png`;
