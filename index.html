@@ -10,7 +10,7 @@
 <body>
 <div id="intro">
   <h1>Life Chart Builder</h1>
-  <p class="sub">あなたの人生曲線を美しく描く</p>
+  <p class="sub">あなたの人生曲線を美しく描く <span style="font-size: 0.8rem; color: #64748b; margin-left: 0.5rem; vertical-align: middle;">v2.1.0</span></p>
   <div class="intro-card">
     <label>生年月日を教えてください</label>
     <div class="date-row">
@@ -25,7 +25,10 @@
 </div>
 <div id="app">
   <div class="top-bar">
-    <h2 id="chart-title">Life Chart</h2>
+    <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+      <h2 id="chart-title">Life Chart</h2>
+      <span style="color: #64748b; font-size: 0.8rem;">v2.1.0</span>
+    </div>
     <div class="actions">
       <button class="btn-s" id="btn-import" title="JSONファイルからインポート">📂 インポート</button>
       <button class="btn-s" id="btn-export-json" title="JSON形式でエクスポート">💾 JSON</button>
